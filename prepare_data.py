@@ -1,8 +1,7 @@
 import argparse
 from io import BytesIO
-import multiprocessing
 from functools import partial
-
+import concurrent
 from PIL import Image
 import lmdb
 from tqdm import tqdm
@@ -49,8 +48,8 @@ def prepare(
     files = [(i, file) for i, (file, label) in enumerate(files)]
     total = 0
 
-    with multiprocessing.Pool(n_worker) as pool:
-        for i, imgs in tqdm(pool.imap_unordered(resize_fn, files)):
+    with concurrent.futures.ThreadPoolExecutor(max_workers=n_worker) as pool:
+        for i, imgs in tqdm(pool.map(resize_fn, files)):
             for size, img in zip(sizes, imgs):
                 key = f"{size}-{str(i).zfill(5)}".encode("utf-8")
 
